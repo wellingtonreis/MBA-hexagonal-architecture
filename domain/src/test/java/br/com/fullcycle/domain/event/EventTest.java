@@ -1,6 +1,7 @@
 package br.com.fullcycle.domain.event;
 
 import br.com.fullcycle.domain.customer.Customer;
+import br.com.fullcycle.domain.event.EventCancelled;
 import br.com.fullcycle.domain.exceptions.ValidationException;
 import br.com.fullcycle.domain.partner.Partner;
 import org.junit.jupiter.api.Assertions;
@@ -178,5 +179,58 @@ public class EventTest {
 
         // then
         Assertions.assertEquals(expectedError, actualError.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve cancelar um evento e registrar EventCancelled")
+    public void testCancelEvent() {
+        final var aPartner =
+                Partner.newPartner("John Doe", "41.536.538/0001-00", "john.doe@gmail.com");
+
+        final var actualEvent = Event.newEvent("Disney on Ice", "2021-01-01", 10, aPartner);
+
+        actualEvent.cancel();
+
+        Assertions.assertEquals(EventStatus.CANCELLED, actualEvent.status());
+        Assertions.assertEquals(1, actualEvent.allDomainEvents().size());
+        Assertions.assertEquals("event.cancelled", actualEvent.allDomainEvents().iterator().next().type());
+        Assertions.assertInstanceOf(EventCancelled.class, actualEvent.allDomainEvents().iterator().next());
+    }
+
+    @Test
+    @DisplayName("Não deve cancelar um evento já cancelado")
+    public void testCancelEventTwice() {
+        final var aPartner =
+                Partner.newPartner("John Doe", "41.536.538/0001-00", "john.doe@gmail.com");
+
+        final var actualEvent = Event.newEvent("Disney on Ice", "2021-01-01", 10, aPartner);
+        actualEvent.cancel();
+
+        final var actualError = Assertions.assertThrows(
+                ValidationException.class,
+                () -> actualEvent.cancel()
+        );
+
+        Assertions.assertEquals("Event already cancelled", actualError.getMessage());
+    }
+
+    @Test
+    @DisplayName("Não deve reservar ticket em evento cancelado")
+    public void testReserveTicketWhenEventIsCancelled() {
+        final var aPartner =
+                Partner.newPartner("John Doe", "41.536.538/0001-00", "john.doe@gmail.com");
+
+        final var aCustomer =
+                Customer.newCustomer("John Doe", "123.456.789-01", "john.doe@gmail.com");
+
+        final var actualEvent = Event.newEvent("Disney on Ice", "2021-01-01", 10, aPartner);
+        actualEvent.cancel();
+
+        final var actualError = Assertions.assertThrows(
+                ValidationException.class,
+                () -> actualEvent.reserveTicket(aCustomer.customerId())
+        );
+
+        Assertions.assertEquals("Event is cancelled", actualError.getMessage());
     }
 }

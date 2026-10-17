@@ -1,0 +1,30 @@
+package br.com.fullcycle.infrastructure.rest.presenters;
+
+import br.com.fullcycle.application.Presenter;
+import br.com.fullcycle.application.event.GetEventByIdUseCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.Optional;
+
+@Component("publicGetEvent")
+public class PublicGetEventByIdResponse implements Presenter<Optional<GetEventByIdUseCase.Output>, Object> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PublicGetEventByIdResponse.class);
+
+    @Override
+    public ResponseEntity<?> present(final Optional<GetEventByIdUseCase.Output> output) {
+        return output
+                .map(o -> ResponseEntity.ok(Map.of("id", o.id(), "status", o.status())))
+                .orElseGet(ResponseEntity.notFound()::build);
+    }
+
+    @Override
+    public ResponseEntity<?> present(final Throwable error) {
+        LOG.error("An error was observer at GetEventByIdUseCase", error);
+        return ResponseEntity.notFound().build();
+    }
+}

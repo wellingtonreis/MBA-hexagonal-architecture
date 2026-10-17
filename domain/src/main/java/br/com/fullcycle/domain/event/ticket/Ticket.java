@@ -78,6 +78,14 @@ public class Ticket {
         return Collections.unmodifiableSet(domainEvents);
     }
 
+    public void cancel() {
+        if (TicketStatus.CANCELLED == this.status) {
+            return;
+        }
+
+        this.status = TicketStatus.CANCELLED;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
